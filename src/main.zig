@@ -1,6 +1,7 @@
 const std = @import("std");
-const tools = @import("tools.zig");
 const Command = @import("command.zig").Command;
+const config = @import("config.zig");
+const tools = @import("tools.zig");
 const handleCommands = @import("command.zig").handleCommands;
 
 const CommandData = struct {
@@ -12,6 +13,11 @@ const CommandOption = struct {
     short_handle: ?[]const u8,
     handle: []const u8,
     cmd: Command,
+};
+
+pub const std_options = .{
+    // Set the log level to info
+    .log_level = config.log_level,
 };
 
 pub fn main() !void {

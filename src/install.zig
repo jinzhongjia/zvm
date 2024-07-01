@@ -120,7 +120,7 @@ pub fn fromVersion(version: []const u8) !void {
     defer arena.deinit();
     const version_data = try fetchVersionData(arena.allocator(), version, platform_str);
     if (version_data) |data| {
-        std.debug.print("Install {s}\n", .{data.name});
+        try tools.printOutln("Install {s}", .{data.name});
 
         // Download and verify
         if (data.shasum) |actual_shasum| {

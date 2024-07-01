@@ -1,18 +1,21 @@
 const std = @import("std");
 const builtin = @import("builtin");
-
-var allocator: std.mem.Allocator = undefined;
-
-var home_dir: []const u8 = undefined;
-
-pub const log = std.log.scoped(.zvm);
+const config = @import("config.zig");
 
 /// init the data
-pub fn dataInit(tmp_allocator: std.mem.Allocator) !void {
-    allocator = tmp_allocator;
+pub fn dataInit(new_allocator: std.mem.Allocator) !void {
+    // setting the stdout
+    const out = std.io.getStdOut().writer();
+    config.stdout = std.io.bufferedWriter(out);
+
+    // setting the stderr
+    const err = std.io.getStdErr().writer();
+    config.stderr = std.io.bufferedWriter(err);
+
+    config.allocator = new_allocator;
     // setting the home dir
-    home_dir = if (builtin.os.tag == .windows)
-        try std.process.getEnvVarOwned(allocator, "USERPROFILE")
+    config.home_dir = if (builtin.os.tag == .windows)
+        try std.process.getEnvVarOwned(config.allocator, "USERPROFILE")
     else
         std.posix.getenv("HOME") orelse ".";
 }
@@ -20,22 +23,57 @@ pub fn dataInit(tmp_allocator: std.mem.Allocator) !void {
 /// deinit the data
 pub fn dataDeinit() void {
     if (builtin.os.tag == .windows)
-        allocator.free(home_dir);
+        config.allocator.free(config.home_dir);
 }
 
 /// get home dir
 pub fn getHome() []const u8 {
-    return home_dir;
+    return config.home_dir;
 }
 
 /// get the allocator
 pub fn getAllocator() std.mem.Allocator {
-    return allocator;
+    return config.allocator;
 }
+
+pub fn printOut(comptime format: []const u8, args: anytype) !void {
+    try config.stdout.writer().print(format, args);
+}
+
+pub fn printOutln(comptime format: []const u8, args: anytype) !void {
+    try config.stdout.writer().print(format ++ "\n", args);
+    try flushOut();
+}
+
+pub fn flushOut() !void {
+    try config.stdout.flush();
+}
+
+pub fn printErr(comptime format: []const u8, args: anytype) !void {
+    try config.stderr.writer().print(format, args);
+}
+
+pub fn printErrln(comptime format: []const u8, args: anytype) !void {
+    try config.stderr.writer().print(format ++ "\n", args);
+    try flushErr();
+}
+
+pub fn flushErr() !void {
+    try config.stderr.flush();
+}
+
+pub const logdebug = config.log.debug;
+pub const loginfo = config.log.info;
+pub const logwarn = config.log.warn;
+pub const logerr = config.log.err;
 
 pub fn getZvmPathSegment(_allocator: std.mem.Allocator, segment: []const u8) ![]u8 {
     return std.fs.path.join(
         _allocator,
         &[_][]const u8{ getHome(), ".zm", segment },
     );
+}
+
+pub fn getVersion() std.SemanticVersion {
+    return config.version;
 }

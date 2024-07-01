@@ -48,15 +48,16 @@ fn handleList() !void {
     defer version_list.deinit();
 
     for (version_list.slice()) |version| {
-        std.debug.print("{s}\n", .{version});
+        try tools.printOut("{s}\n", .{version});
     }
+    try tools.flushOut();
 }
 
 fn installVersion(params: ?[]const u8) !void {
     if (params) |version| {
         try install.fromVersion(version);
     } else {
-        std.debug.print("Error: Please specify a version to install using 'install <version>'.\n", .{});
+        try tools.printErrln("Error: Please specify a version to install using 'install <version>'.", .{});
     }
 }
 
@@ -64,17 +65,17 @@ fn useVersion(params: ?[]const u8) !void {
     if (params) |version| {
         try alias.setZigVersion(version);
     } else {
-        std.debug.print("Error: Please specify a version to use with 'use <version>'.\n", .{});
+        try tools.printErrln("Error: Please specify a version to use with 'use <version>'.", .{});
     }
 }
 
 fn setDefault() !void {
-    std.debug.print("Handling 'default' command.\n", .{});
+    try tools.printOutln("Handling 'default' command.", .{});
     // Your default code here
 }
 
 fn getVersion() !void {
-    std.debug.print("zvm {}\n", .{options.zvm_version});
+    try tools.printOutln("zvm {}", .{tools.getVersion()});
 }
 
 fn displayHelp() !void {
@@ -97,9 +98,9 @@ fn displayHelp() !void {
         \\For additional information and contributions, please visit the GitHub repository.
     ;
 
-    std.debug.print(help_message, .{});
+    try tools.printOutln(help_message, .{});
 }
 
 fn handleUnknown() !void {
-    std.debug.print("Unknown command. Use 'zvm --help' for usage information.\n", .{});
+    try tools.printErrln("Unknown command. Use 'zvm --help' for usage information.", .{});
 }

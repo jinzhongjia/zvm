@@ -31,7 +31,7 @@ pub fn content(allocator: std.mem.Allocator, version: []const u8, url: []const u
             // std.debug.print("Versions directory already exists: {s}\n", .{version_path});
         },
         else => {
-            std.debug.print("Failed to create versions directory: {}\n", .{err});
+            tools.logerr("Failed to create versions directory: {}", .{err});
             return err;
         },
     };
@@ -44,18 +44,19 @@ pub fn content(allocator: std.mem.Allocator, version: []const u8, url: []const u
     defer data_allocator.free(version_folder_path);
 
     if (checkExistingVersion(version_folder_path)) {
-        std.debug.print("→ Version {s} is already installed.\n", .{version});
-        std.debug.print("Do you want to reinstall? (\x1b[1mY\x1b[0mes/\x1b[1mN\x1b[0mo): ", .{});
+        try tools.printOut("→ Version {s} is already installed.\n", .{version});
+        try tools.printOut("Do you want to reinstall? (\x1b[1mY\x1b[0mes/\x1b[1mN\x1b[0mo): ", .{});
+        try tools.flushOut();
 
         if (!confirmUserChoice()) {
             // Ask if the version should be set as the default
-            std.debug.print("Do you want to set version {s} as the default? (\x1b[1mY\x1b[0mes/\x1b[1mN\x1b[0mo): ", .{version});
+            try tools.printOutln("Do you want to set version {s} as the default? (\x1b[1mY\x1b[0mes/\x1b[1mN\x1b[0mo): ", .{version});
             if (confirmUserChoice()) {
                 try alias.setZigVersion(version);
-                std.debug.print("Version {s} has been set as the default.\n", .{version});
+                try tools.printOutln("Version {s} has been set as the default.", .{version});
                 return null;
             } else {
-                std.debug.print("Aborting...\n", .{});
+                try tools.printOutln("Aborting...", .{});
                 return null;
             }
         }
