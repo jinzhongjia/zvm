@@ -1,6 +1,7 @@
 const std = @import("std");
-const util_data = @import("util/data.zig");
 const command = @import("command.zig");
+const util_data = @import("util/data.zig");
+const util_log = @import("util/log.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -25,3 +26,7 @@ pub fn main() !void {
     // parse the args and handle command
     try command.handle_command(args);
 }
+
+pub const std_options: std.Options = .{
+    .logFn = util_log.logFn,
+};

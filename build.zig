@@ -57,40 +57,40 @@ pub fn build(b: *Build) void {
     const run_step = b.step("run", "Run the application");
     run_step.dependOn(&run_exe.step);
 
-    const release = b.step("release", "make an upstream binary release");
-    const release_targets = [_]std.Target.Query{
-        .{ .cpu_arch = .x86_64, .os_tag = .linux },
-        .{ .cpu_arch = .x86_64, .os_tag = .windows },
-        .{ .cpu_arch = .x86_64, .os_tag = .macos },
-        .{ .cpu_arch = .x86, .os_tag = .linux },
-        .{ .cpu_arch = .x86, .os_tag = .windows },
-        .{ .cpu_arch = .aarch64, .os_tag = .linux },
-        .{ .cpu_arch = .aarch64, .os_tag = .macos },
-        .{ .cpu_arch = .riscv64, .os_tag = .linux },
-    };
-
-    for (release_targets) |target_query| {
-        const resolved_target = b.resolveTargetQuery(target_query);
-        const t = resolved_target.result;
-        const rel_exe = b.addExecutable(.{
-            .name = "zvm",
-            .root_source_file = b.path("src/main.zig"),
-            .target = resolved_target,
-            .optimize = .ReleaseSafe,
-            .strip = true,
-        });
-
-        const rel_exe_options_module = options.createModule();
-        rel_exe.root_module.addImport("options", rel_exe_options_module);
-
-        const file_name_ext = if (t.os.tag == .windows) ".exe" else "";
-
-        const install = b.addInstallArtifact(rel_exe, .{});
-        install.dest_dir = .prefix;
-        install.dest_sub_path = b.fmt("{s}-{s}-{s}{s}", .{ @tagName(t.cpu.arch), @tagName(t.os.tag), rel_exe.name, file_name_ext });
-
-        release.dependOn(&install.step);
-    }
+    // const release = b.step("release", "make an upstream binary release");
+    // const release_targets = [_]std.Target.Query{
+    //     .{ .cpu_arch = .x86_64, .os_tag = .linux },
+    //     .{ .cpu_arch = .x86_64, .os_tag = .windows },
+    //     .{ .cpu_arch = .x86_64, .os_tag = .macos },
+    //     .{ .cpu_arch = .x86, .os_tag = .linux },
+    //     .{ .cpu_arch = .x86, .os_tag = .windows },
+    //     .{ .cpu_arch = .aarch64, .os_tag = .linux },
+    //     .{ .cpu_arch = .aarch64, .os_tag = .macos },
+    //     .{ .cpu_arch = .riscv64, .os_tag = .linux },
+    // };
+    //
+    // for (release_targets) |target_query| {
+    //     const resolved_target = b.resolveTargetQuery(target_query);
+    //     const t = resolved_target.result;
+    //     const rel_exe = b.addExecutable(.{
+    //         .name = "zvm",
+    //         .root_source_file = b.path("src/main.zig"),
+    //         .target = resolved_target,
+    //         .optimize = .ReleaseSafe,
+    //         .strip = true,
+    //     });
+    //
+    //     const rel_exe_options_module = options.createModule();
+    //     rel_exe.root_module.addImport("options", rel_exe_options_module);
+    //
+    //     const file_name_ext = if (t.os.tag == .windows) ".exe" else "";
+    //
+    //     const install = b.addInstallArtifact(rel_exe, .{});
+    //     install.dest_dir = .prefix;
+    //     install.dest_sub_path = b.fmt("{s}-{s}-{s}{s}", .{ @tagName(t.cpu.arch), @tagName(t.os.tag), rel_exe.name, file_name_ext });
+    //
+    //     release.dependOn(&install.step);
+    // }
 
     // Creates a step for unit testing. This only builds the test executable
     // but does not run it.

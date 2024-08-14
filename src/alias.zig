@@ -2,11 +2,11 @@
 //! for Windows, we will use copy dir(when Windows create soft link it requires admin)
 //! for set version
 const std = @import("std");
-const assert = std.debug.assert;
 const builtin = @import("builtin");
 const config = @import("config.zig");
 const util_data = @import("util/data.zig");
 const util_tool = @import("util/tool.zig");
+const util_log = @import("util/log.zig");
 
 /// try to set zig version
 /// this will use system link on unix-like
@@ -33,7 +33,7 @@ pub fn set_version(version: []const u8, is_zls: bool) !void {
         if (err != error.FileNotFound)
             return err;
 
-        std.debug.print("zig version {s} is not installed. Please install it before proceeding.\n", .{version});
+        util_log.err("zig version {s} is not installed. Please install it before proceeding.", .{version});
         std.process.exit(1);
     };
 
@@ -51,9 +51,6 @@ pub fn set_version(version: []const u8, is_zls: bool) !void {
 }
 
 fn update_current(zig_path: []const u8, symlink_path: []const u8) !void {
-    assert(zig_path.len > 0);
-    assert(symlink_path.len > 0);
-
     if (builtin.os.tag == .windows) {
         if (util_tool.does_path_exist(symlink_path)) try std.fs.deleteTreeAbsolute(symlink_path);
         try util_tool.copy_dir(zig_path, symlink_path);
@@ -77,9 +74,10 @@ fn verify_zig_version(expected_version: []const u8) !void {
     defer allocator.free(actual_version);
 
     if (!std.mem.eql(u8, expected_version, actual_version)) {
-        std.debug.print("Expected Zig version {s}, but currently using {s}. Please check.\n", .{ expected_version, actual_version });
+        util_log.err("Expected Zig version {s}, but currently using {s}. Please check.", .{ expected_version, actual_version });
+        std.process.exit(1);
     } else {
-        std.debug.print("Now using Zig version {s}\n", .{expected_version});
+        util_log.info("Now using Zig version {s}", .{expected_version});
     }
 }
 
@@ -91,8 +89,9 @@ fn verify_zls_version(expected_version: []const u8) !void {
     defer allocator.free(actual_version);
 
     if (!std.mem.eql(u8, expected_version, actual_version)) {
-        std.debug.print("Expected zls version {s}, but currently using {s}. Please check.\n", .{ expected_version, actual_version });
+        util_log.err("Expected zls version {s}, but currently using {s}. Please check.\n", .{ expected_version, actual_version });
+        std.process.exit(1);
     } else {
-        std.debug.print("Now using zls version {s}\n", .{expected_version});
+        util_log.info("Now using zls version {s}\n", .{expected_version});
     }
 }

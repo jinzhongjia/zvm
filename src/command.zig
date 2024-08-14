@@ -12,6 +12,7 @@ const config = @import("config.zig");
 const util_data = @import("util/data.zig");
 const util_tool = @import("util/tool.zig");
 const util_http = @import("util/http.zig");
+const util_log = @import("util/log.zig");
 
 // Command types
 pub const Command = enum {
@@ -131,7 +132,7 @@ pub fn handle_alias(params: []const []const u8) !void {
 
     std.fs.accessAbsolute(current_path, .{}) catch |err| {
         if (err == std.fs.Dir.AccessError.FileNotFound) {
-            std.debug.print("{s} has not been installed yet, please install it fist!\n", .{if (is_zls) "zls" else "Zig"});
+            util_log.info("{s} has not been installed yet, please install it fist!\n", .{if (is_zls) "zls" else "Zig"});
             std.process.exit(1);
         }
         return err;
@@ -159,8 +160,8 @@ fn handle_list(param: ?[]const u8) !void {
             } else
             // when not zig
             if (!util_tool.eql_str(p, "zig")) {
-                std.debug.print("Error param, you can specify zig or zls\n", .{});
-                return;
+                util_log.err("Unavailable param, you can specify zig or zls", .{});
+                std.process.exit(1);
             }
         }
 
@@ -178,7 +179,7 @@ fn handle_list(param: ?[]const u8) !void {
     defer util_tool.free_str_array(version_list, allocator);
 
     for (version_list) |version| {
-        std.debug.print("{s}\n", .{version});
+        util_log.info("{s}", .{version});
     }
 }
 
@@ -191,13 +192,13 @@ fn install_version(subcmd: ?[]const u8, param: ?[]const u8) !void {
         } else if (util_tool.eql_str(scmd, "zls")) {
             is_zls = true;
         } else {
-            std.debug.print("Unknown subcommand '{s}'. Use 'install zig/zls <version>'.\n", .{scmd});
-            return;
+            util_log.err("Unknown subcommand '{s}'. Use 'install zig/zls <version>'.", .{scmd});
+            std.process.exit(1);
         }
 
         const version = param orelse {
-            std.debug.print("Please specify a version to install: 'install zig/zls <version>'.\n", .{});
-            return;
+            util_log.err("Please specify a version to install: 'install zig/zls <version>'.", .{});
+            std.process.exit(1);
         };
 
         try install.install(version, is_zls);
@@ -207,7 +208,8 @@ fn install_version(subcmd: ?[]const u8, param: ?[]const u8) !void {
         // set zls version
         try install.install(version, true);
     } else {
-        std.debug.print("Please specify a version to install: 'install zig/zls <version>' or 'install <version>'.\n", .{});
+        util_log.err("Please specify a version to install: 'install zig/zls <version>' or 'install <version>'.", .{});
+        std.process.exit(1);
     }
 }
 
@@ -220,13 +222,13 @@ fn use_version(subcmd: ?[]const u8, param: ?[]const u8) !void {
         } else if (util_tool.eql_str(scmd, "zls")) {
             is_zls = true;
         } else {
-            std.debug.print("Unknown subcommand '{s}'. Use 'use zig <version>' or 'use zls <version>'.\n", .{scmd});
-            return;
+            util_log.err("Unknown subcommand '{s}'. Use 'use zig <version>' or 'use zls <version>'.", .{scmd});
+            std.process.exit(1);
         }
 
         const version = param orelse {
-            std.debug.print("Please specify a version to use: 'use zig/zls <version>'.\n", .{});
-            return;
+            util_log.err("Please specify a version to use: 'use zig/zls <version>'.", .{});
+            std.process.exit(1);
         };
 
         try alias.set_version(version, is_zls);
@@ -236,7 +238,8 @@ fn use_version(subcmd: ?[]const u8, param: ?[]const u8) !void {
         // set zls version
         try alias.set_version(version, true);
     } else {
-        std.debug.print("Please specify a version to use: 'use zig/zls <version>' or 'use <version>'.\n", .{});
+        util_log.err("Please specify a version to use: 'use zig/zls <version>' or 'use <version>'.", .{});
+        std.process.exit(1);
     }
 }
 
@@ -249,13 +252,13 @@ fn remove_version(subcmd: ?[]const u8, param: ?[]const u8) !void {
         } else if (util_tool.eql_str(scmd, "zls")) {
             is_zls = true;
         } else {
-            std.debug.print("Unknown subcommand '{s}'. Use 'remove zig <version>' or 'remove zls <version>'.\n", .{scmd});
-            return;
+            util_log.err("Unknown subcommand '{s}'. Use 'remove zig <version>' or 'remove zls <version>'.", .{scmd});
+            std.process.exit(1);
         }
 
         const version = param orelse {
-            std.debug.print("Please specify a version: 'remove zig <version>' or 'remove zls <version>'.\n", .{});
-            return;
+            util_log.err("Please specify a version: 'remove zig <version>' or 'remove zls <version>'.", .{});
+            std.process.exit(1);
         };
 
         try remove.remove(version, is_zls);
@@ -265,17 +268,13 @@ fn remove_version(subcmd: ?[]const u8, param: ?[]const u8) !void {
         // set zls version
         try remove.remove(version, true);
     } else {
-        std.debug.print("Please specify a version to use: 'remove zig/zls <version>' or 'remove <version>'.\n", .{});
+        util_log.err("Please specify a version to use: 'remove zig/zls <version>' or 'remove <version>'.\n", .{});
+        std.process.exit(1);
     }
 }
 
-fn set_default() !void {
-    std.debug.print("Handling 'default' command.\n", .{});
-    // Your default code here
-}
-
 fn get_version() !void {
-    std.debug.print("zvm {}\n", .{options.zvm_version});
+    util_log.info("zvm {}", .{options.zvm_version});
 }
 
 fn display_help() !void {
@@ -299,12 +298,11 @@ fn display_help() !void {
         \\    zvm remove zig 0.12.0     Remove Zig version 0.12.0.
         \\
         \\For additional information and contributions, please visit the GitHub repository.
-        \\
     ;
 
-    std.debug.print(help_message, .{});
+    util_log.info(help_message, .{});
 }
 
 fn handle_unknown() !void {
-    std.debug.print("Unknown command. Use 'zvm --help' for usage information.\n", .{});
+    util_log.info("Unknown command. Use 'zvm --help' for usage information.\n", .{});
 }

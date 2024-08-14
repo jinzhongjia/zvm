@@ -9,6 +9,7 @@ const util_data = @import("util/data.zig");
 const util_extract = @import("util/extract.zig");
 const util_tool = @import("util/tool.zig");
 const util_http = @import("util/http.zig");
+const util_log = @import("util/log.zig");
 
 const Version = struct {
     name: []const u8,
@@ -87,8 +88,8 @@ fn install_zig(version: []const u8) !void {
 fn install_zls(version: []const u8) !void {
     const true_version = blk: {
         if (util_tool.eql_str("master", version)) {
-            std.debug.print("Sorry, the 'install zls' feature is not supported at this time. Please compile zls locally.", .{});
-            return;
+            util_log.err("Sorry, now we can not install master zls.", .{});
+            std.process.exit(1);
         }
 
         for (config.zls_list_1, 0..) |val, i| {
