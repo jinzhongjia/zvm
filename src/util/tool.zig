@@ -1,5 +1,6 @@
 const std = @import("std");
 const data = @import("data.zig");
+const log = @import("log.zig");
 
 /// Free str array
 pub fn free_str_array(str_arr: []const []const u8, allocator: std.mem.Allocator) void {
@@ -16,8 +17,13 @@ pub fn eql_str(str1: []const u8, str2: []const u8) bool {
 
 /// try to create path
 pub fn try_create_path(path: []const u8) !void {
-    std.fs.cwd().makePath(path) catch |err|
-        if (err != error.PathAlreadyExists) return err;
+    log.debug("try create path, {s}", .{path});
+    std.fs.cwd().makePath(path) catch |err| {
+        if (err != error.PathAlreadyExists)
+            return err
+        else
+            log.debug("path {s} has existed!", .{path});
+    };
 }
 
 // check dir exist

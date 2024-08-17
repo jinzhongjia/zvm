@@ -1,3 +1,4 @@
+const builtin = @import("builtin");
 const std = @import("std");
 
 /// log func for zvm
@@ -22,7 +23,7 @@ pub fn logFn(
         const stderr = std.io.getStdErr().writer();
         var err_bw = std.io.bufferedWriter(stderr);
         const err_writer = err_bw.writer();
-        err_writer.print("Error:" ++ format ++ "\n", args) catch return;
+        err_writer.print("error:" ++ format ++ "\n", args) catch return;
         err_bw.flush() catch return;
         return;
     }
@@ -32,11 +33,13 @@ pub fn logFn(
     const out_writer = out_bw.writer();
 
     if (message_level == .debug) {
-        out_writer.print("Debug:" ++ format ++ "\n", args) catch return;
+        if (builtin.mode != .Debug) return;
+        out_writer.print("debug:" ++ format ++ "\n", args) catch return;
     } else if (message_level == .warn) {
-        out_writer.print("Warning:" ++ format ++ "\n", args) catch return;
+        out_writer.print("warning:" ++ format ++ "\n", args) catch return;
     } else {
-        out_writer.print(format ++ "\n", args) catch return;
+        out_writer.print(\\\033[1;34minfo\033[0m
+    ++ format ++ "\n", args) catch return;
     }
 
     out_bw.flush() catch return;

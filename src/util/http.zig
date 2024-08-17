@@ -2,6 +2,7 @@ const std = @import("std");
 const data = @import("data.zig");
 const tool = @import("tool.zig");
 const hash = @import("hash.zig");
+const log = @import("log.zig");
 
 /// http get
 pub fn http_get(allocator: std.mem.Allocator, uri: std.Uri) ![]const u8 {
@@ -56,7 +57,9 @@ pub fn download(
     // then calculate hash and verify, return the file if eql
     // otherwise delete this file
     if (tool.does_path_exist2(store, file_name)) {
+        log.debug("download file path exist, path: {s}", .{file_name});
         if (if_hash) {
+            log.debug("calculate hashsum of {s}", .{file_name});
             var sha256 = std.crypto.hash.sha2.Sha256.init(.{});
             const file = try store.openFile(file_name, .{});
             var buffer: [512]u8 = undefined;
@@ -74,7 +77,10 @@ pub fn download(
                 try file.seekTo(0);
                 return file;
             }
+            log.debug("hashsum verify not catched", .{});
         }
+
+        log.debug("delete file: {s}", .{file_name});
         try store.deleteFile(file_name);
     }
 
@@ -87,6 +93,7 @@ pub fn download(
     var req = try client.open(.GET, uri, .{ .server_header_buffer = &header_buffer });
     defer req.deinit();
 
+    log.info("send http request and wait response", .{});
     try req.send();
     try req.wait();
 
@@ -113,6 +120,8 @@ pub fn download(
     var buffer: [512]u8 = undefined;
     // get reader
     const reader = req.reader();
+    log.info("begin download file", .{});
+    // TODO: make a progress bar
     while (true) {
         // the read byte number
         const byte_nums = try reader.read(&buffer);
@@ -123,6 +132,7 @@ pub fn download(
         // write to file
         try new_file.writeAll(buffer[0..byte_nums]);
     }
+    log.info("success to download file", .{});
 
     // when calculate hashsum
     if (if_hash) {

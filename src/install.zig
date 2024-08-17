@@ -20,11 +20,11 @@ const Version = struct {
 
 /// try install specified version
 pub fn install(version: []const u8, is_zls: bool) !void {
-    if (is_zls) {
-        try install_zls(version);
-    } else {
+    util_log.info("try install {s} {s}", .{ if (is_zls) "zls" else "zig", version });
+    if (is_zls)
+        try install_zls(version)
+    else if(is_zls)
         try install_zig(version);
-    }
 }
 
 /// Try to install the specified version of zig
@@ -113,21 +113,30 @@ fn install_zls(version: []const u8) !void {
 
     // get version path
     const version_path = try util_data.get_zvm_zls_version(arena_allocator);
+    util_log.debug("current zvm zls version path is {s}", .{version_path});
+
     // get extract path
     const extract_path = try std.fs.path.join(arena_allocator, &.{ version_path, true_version });
+    util_log.debug("extract path is {s}", .{extract_path});
 
     if (util_tool.does_path_exist(extract_path)) {
+        util_log.debug("found existed extract path, {s}", .{extract_path});
         try alias.set_version(true_version, true);
         return;
     }
 
+    util_log.debug("not found existed extract path, {s}", .{extract_path});
+
     // get version data
     const version_data: meta.Zls.VersionData = blk: {
+        util_log.info("tay get zls version meta data", .{});
         const res = try util_http.http_get(arena_allocator, config.zls_url);
         var zls_meta = try meta.Zls.init(res, arena_allocator);
         const tmp_val = try zls_meta.get_version_data(true_version, reverse_platform_str, arena_allocator);
         break :blk tmp_val orelse return error.UnsupportedVersion;
     };
+
+    util_log.debug("try get version data, version: {s}", .{version});
 
     const file_name = try std.mem.concat(
         arena_allocator,
@@ -136,6 +145,7 @@ fn install_zls(version: []const u8) !void {
     );
 
     const parsed_uri = std.Uri.parse(version_data.tarball) catch unreachable;
+    // TODO: add download info
     const new_file = try util_http.download(parsed_uri, file_name, null, version_data.size);
     defer new_file.close();
 
